@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 4.0)
-project(C___)
+project(CppCourseDesign)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(C___ EasyMode.cpp)
+add_executable(CppCourseDesign main.cpp)
