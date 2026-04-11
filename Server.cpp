@@ -1,5 +1,4 @@
 #pragma once
-#include "Game.cpp"
 #include "httplib.h"
 #include <iostream>
 #include <fstream>

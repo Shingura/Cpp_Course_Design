@@ -4,14 +4,18 @@
 #include <random>
 #include <limits>
 #include <algorithm>
+#include <utility>
 
 // =============================================
 // 玩家基类：可能为真人玩家或电脑
 // =============================================
+
 class Player {
-    protected:
-        // static 保证所有 Player 及其子类共享同一个引擎
+    protected: // 使用 protected 使子类（HumanPlayer 和 ComputerPlayer）可访问随机数引擎，但外部代码无法直接访问
         static std::mt19937 gen;
+        // static: 1. 保证所有 Player 及其子类共享同一个引擎，避免每次重新初始化，提高运行效率
+        //         2. 静态成员变量的声明与初始化分离，确保全局唯一，定义位于 line:45
+        // 生成随机数还可以使用 C 标准库的 rand() 函数，代码简单，但不支持分布控制，生成随机整数时需要通过取余（%）手动计算，例如：rand() % 6 + 1。
 
     public:
         std::string name;
@@ -19,15 +23,14 @@ class Player {
         int dice;   // 本轮骰点
         int bet;    // 本轮下注
 
-        Player(std::string  name, int chips)
-            : name(std::move(name)), chips(chips), dice(0), bet(0) {}
+        Player(std::string name, int chips)
+            : name(std::move(name)), chips(chips), dice(0), bet(0) {} // 使用 std::move 避免不必要的拷贝，提高性能
 
         virtual ~Player() = default; // 默认析构函数
 
         // 掷骰子，结果存入 dice
         void rollDice() {
-            // static 保证引擎只初始化一次，下一次使用时会继承上一次的初始化结果
-            static std::uniform_int_distribution<int> dist(1, 6);
+            static std::uniform_int_distribution<int> dist(1, 6); // 生成均匀分布的整数随机数，同 line:14，static 保证分布只初始化一次
             dice = dist(gen);
         }
 
@@ -36,9 +39,11 @@ class Player {
             return chips > 0;
         }
 
-        // 纯虚函数：子类（真人和计算机）各自决定如何下注
-        virtual void decideBet() = 0;
+        // 纯虚函数：子类（真人和计算机）各自决定如何下注，方便 Game.cpp 中统一接口
+        virtual void decideBet() = 0; // = 0 声明纯虚函数，表示该函数是一个接口，必须由子类实现，同时使 Player 成为抽象类，不能直接实例化。。
 };
+
+std::mt19937 Player::gen(std::random_device{}()); // 使用硬件随机数生成器为随机数引擎提供高质量种子值
 
 // =============================================
 // 真人玩家子类：输出掷出点数并向玩家请求输入下注
@@ -49,9 +54,9 @@ class HumanPlayer : public Player {
             : Player(std::move(name), chips) {}
 
         void decideBet() override {
-            std::cout << name << "，你掷出了：" << dice <<"\n";
+            std::cout << name << "，你掷出了：" << dice <<"\n"; // 这里的 dice 由 rollDice() 生成，详见 Game.cpp line:23, 24
 
-            int maxBet = std::min(5, chips);
+            int maxBet = std::min(5, chips); // 不能超过自身持有赌注
             while (true) {
                 std::cout << "你的剩余赌注为 " << chips << "。" << std::endl;
                 std::cout << "请下注（1–" << maxBet << "）：";
@@ -59,12 +64,12 @@ class HumanPlayer : public Player {
 
                 if (std::cin.fail()) { // 遇到非数字内容（如字母、符号等）
                     std::cin.clear();  // 清除 cin 的错误状态，使其恢复读取
-                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // 将缓冲区内残留的非法内容全部丢弃，忽略尽可能多的字符，确保无论用户输入了多长的乱码都能清理干净
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // 将缓冲区内残留的非法内容全部丢弃，忽略尽可能多的字符（直到换行符为止），确保无论用户输入了多长的乱码都能清理干净
                     std::cout << "下注须为整数，请重新下注。\n";
                     continue;
                 }
-                if (bet >= 1 && bet <= maxBet) break;
-                std::cout << "下注须在 1 到 " << maxBet << " 之间，请重新输入。\n";
+                if (bet >= 1 && bet <= maxBet) break; // 完成下注，写入变量 bet
+                std::cout << "下注须在 1 到 " << maxBet << " 之间，请重新输入。\n"; // 若不符合 bet >= 1 && bet <= maxBet，则要求重新下注
             }
         }
 };

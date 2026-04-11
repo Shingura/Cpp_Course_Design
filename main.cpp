@@ -1,5 +1,7 @@
 #pragma once
 #include "Server.cpp"
+#include "Game.cpp"
+#include "Player.cpp"
 
 // 清除整个屏幕，并将光标移回左上角，从而实现「刷新」的效果
 void clearScreen() {
@@ -47,23 +49,31 @@ int main() {
                 clearScreen();
                 showRules();
                 break;
+
             case 2: {
                 clearScreen();
+
                 std::string NickName;
                 std::cout << "请输入你的昵称：";
                 std::getline(std::cin, NickName); // std::getline 会自动消费掉行末的换行符，因此无需用 cin.ignore 清除缓冲区
+
                 clearScreen();
+
                 HumanPlayer human(NickName, 10);
                 ComputerPlayer computer(10);
+
                 Game game(&human, &computer);
                 game.run();
                 break;
             }
+
             case 3:
                 startServer();
                 break;
+
             case 0:
                 return 0;
+
             default:
                 std::cout << "无效选项，请重新输入。\n";
         }
