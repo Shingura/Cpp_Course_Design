@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>对抗游戏</title>
+</head>
+
+<body>
+<h1>对抗游戏</h1>
+<input id="name" placeholder="输入昵称" />
+<br><br>
+<button onclick="join(1)">加入 1P</button>
+<button onclick="join(2)">加入 2P</button>
+<p id="status"></p>
+
+<script>
+    function join(slot) {
+        const name = document.getElementById('name').value.trim();
+        if (!name) {
+            document.getElementById('status').textContent = '请先输入昵称';
+            return;
+        }
+        fetch('/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slot: slot, name: name })
+        })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('status').textContent = data.message;
+                const es = new EventSource('/events');
+                es.onmessage = function(e) {
+                    document.getElementById('status').textContent = '双方就绪！' + e.data + '，游戏即将开始';
+                    es.close();
+                };
+            });
+    }
+</script>
+</body>
+</html>

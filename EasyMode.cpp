@@ -28,7 +28,7 @@ int GetComputerBet(int dice, int chips) {
         bet = 4;
     }
 
-    bet += fluctuationDist(gen);          // 随机加 0 或 1
+    bet += fluctuationDist(gen);     // 随机加 0 或 1
     bet = std::min(bet, 5);         // 不超过规则上限
     bet = std::min(bet, chips);     // 不超过自身筹码
     return bet;
